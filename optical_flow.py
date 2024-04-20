@@ -30,11 +30,16 @@ def poly_exp(signal, confidence, sigma):
         2D array where each element is a scalar representing the constant term of the polynomial expansion at each pixel.
     """
     # Calculate Gaussian kernel (1D since it is separable)
+    # Cover all Gaussian distribution
     kernel_size = int(4 * sigma + 1)
+    # Generate list who represents x-points which cover distribution
     positions = np.arange(-kernel_size, kernel_size + 1, dtype=int)
+    # Using point from previous line calculates Gaussian function values in this points
     gaussian_kernel = np.exp(-(positions**2) / (2 * sigma**2))
 
-    # Construct basis matrices for X and Y dimensions
+    # Construct basis matrices for X (row space) and Y (column space) dimensions
+    #  axis = -1 specifies that operation must be performed along last axis in inputted values 
+    #  in our case it is Y axis
     basis_x = np.stack(
         [np.ones(gaussian_kernel.shape), positions, 
          np.ones(gaussian_kernel.shape), positions**2, 
@@ -51,15 +56,20 @@ def poly_exp(signal, confidence, sigma):
     )
 
     # Multiply confidence and signal for weighting
+    # Calculate the expected value of pixels in each point of image
     weighted_signal = confidence * signal
 
     # Initialize matrices for coefficients and the solution vector
+    # generate shape [signal.shape[0], signal.shape[1], basis_x.shape[-1], basis_x.shape[-1]] - 4D
     cross_correlation_matrix = np.empty(list(signal.shape) + [basis_x.shape[-1]] * 2)
+    # generate shape [signal.shape[0], signal.shape[1], basis_x.shape[-1]] - 3D
     solution_vector = np.empty(list(signal.shape) + [basis_x.shape[-1]])
 
     # Calculate cross-correlation matrix and solution vector using separable correlation
     weighted_basis_x = np.einsum("i,ij->ij", gaussian_kernel, basis_x)
+    # result weighted_basis_x is calculated in way: weighted_basis_x[i,j] = gaussian_kernel[i] * basis_x[i,j]
     weighted_basis_y = np.einsum("i,ij->ij", gaussian_kernel, basis_y)
+    # the same as in weighted_basis_x
 
     for i in range(basis_x.shape[-1]):
         for j in range(basis_x.shape[-1]):

@@ -32,11 +32,29 @@ def main():
     fn1 = yosemite.format(2)
     fn2 = yosemite.format(4)
 
+
     f1 = skimage.io.imread(fn1).astype(np.double)
     f2 = skimage.io.imread(fn2).astype(np.double)
 
+    # ADDED ROWS
+    # f1 = f1[:,:,0]
+    # f2 = f2[:,:,0]
+    # 
+
     # certainties for images - certainty is decreased for pixels near the edge
     # of the image, as recommended by Farneback
+
+    # This code generates confidence level for each pixel in image
+    # For every image c1 will be equal to 
+    # array([[0. , 0. , 0. , ..., 0. , 0. , 0. ],
+    #        [0. , 0.2, 0.2, ..., 0.2, 0.2, 0. ],
+    #        [0. , 0.2, 0.4, ..., 0.4, 0.2, 0. ],
+    #        ...,
+    #        [0. , 0.2, 0.4, ..., 0.4, 0.2, 0. ],
+    #        [0. , 0.2, 0.2, ..., 0.2, 0.2, 0. ],
+    #        [0. , 0. , 0. , ..., 0. , 0. , 0. ]])
+    # All values converge to 1 in the center of image (step = 0.2 it is constant)
+    # Each cells represent the probability that it contains the true pixel value at a given point (recommendation of Farneback)
     c1 = np.minimum(
         1, 1 / 5 * np.minimum(np.arange(f1.shape[0])[:, None], np.arange(f1.shape[1]))
     )
@@ -47,6 +65,7 @@ def main():
             f1.shape[1] - 1 - np.arange(f1.shape[1]),
         ),
     )
+
     c2 = c1
 
     # ---------------------------------------------------------------
@@ -135,9 +154,9 @@ def main():
     axes[0, 0].set_title("f1 (fixed image)")
     axes[0, 1].imshow(f2, cmap=cmap)
     axes[0, 1].set_title("f2 (moving image)")
-    axes[1, 0].imshow(f1 - f2_w2, cmap=cmap, vmin=vmin, vmax=vmax)
+    axes[1, 0].imshow(f2_w2, cmap=cmap, vmin=vmin, vmax=vmax)
     axes[1, 0].set_title("difference f1 - f2 warped: opencv implementation")
-    axes[1, 1].imshow(f1 - f2_w, cmap=cmap, vmin=vmin, vmax=vmax)
+    axes[1, 1].imshow(f2_w, cmap=cmap, vmin=vmin, vmax=vmax)
     axes[1, 1].set_title("difference f1 - f2 warped: this implementation")
 
     plt.show()
